@@ -3,13 +3,13 @@
 class QueryBuilder
 {
 private:
-    string table;             // Таблица
-    string columns;           // Столбцы для выборки
-    string conditions;        // Условия WHERE
-    string ordering;          // Условия ORDER BY
-    string values;            // Значения для INSERT
-    string joins;             // JOIN-условия
-    string queryType;         // Тип запроса: SELECT, INSERT и т.д.
+    string table;             // Table
+    string columns;           // Columns for selection
+    string conditions;        // WHERE conditions
+    string ordering;          // ORDER BY conditions
+    string values;            // Values for INSERT
+    string joins;             // JOIN conditions
+    string queryType;         // Query type: SELECT, INSERT, etc.
 
 public:
     // Constructor
@@ -18,7 +18,7 @@ public:
         reset();
     }
 
-    // Сброс параметров для нового запроса
+    // Reset parameters for a new query
     void reset()
     {
         table = "";
@@ -30,20 +30,20 @@ public:
         queryType = "SELECT";
     }
 
-    // Метод выбора столбцов
+    // Method to select columns
     void select(string cols = "*")
     {
         queryType = "SELECT";
         columns = cols;
     }
 
-    // Метод для указания таблицы
+    // Method to specify the table
     void From(string tbl)
     {
         table = tbl;
     }
 
-    // Метод для добавления условий WHERE
+    // Method to add WHERE conditions
     void where(string column, string op, string value)
     {
         if (conditions != "")
@@ -51,19 +51,19 @@ public:
         conditions += column + " " + op + " '" + value + "'";
     }
 
-    // Метод для сортировки
+    // Method for sorting
     void orderBy(string column, string direction = "ASC")
     {
         ordering = " ORDER BY " + column + " " + direction;
     }
 
-    // Метод для добавления JOIN
+    // Method to add JOIN
     void join(string joinTable, string condition, string type = "INNER")
     {
         joins += " " + type + " JOIN " + joinTable + " ON " + condition;
     }
 
-    // Метод для добавления INSERT
+    // Method to add INSERT
     void insert(string tbl, string cols, string vals)
     {
         queryType = "INSERT";
@@ -72,7 +72,7 @@ public:
         values = "VALUES (" + vals + ")";
     }
 
-    // Метод выполнения запроса с автоматическим подключением
+    // Method to execute the query with automatic connection
     void get()
     {
         // Automatically handle database connection and disconnection
