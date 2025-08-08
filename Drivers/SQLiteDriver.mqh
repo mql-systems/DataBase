@@ -1,39 +1,90 @@
-#include "DatabaseDriver.mqh"
+#include "IDatabaseDriver.mqh"
 
-// SQLite database driver
-class SQLiteDriver : public DatabaseDriver {
-private:
-   int db; // Handle to the SQLite database connection
+//+------------------------------------------------------------------+
+//| Driver for SQLite                                                |
+//+------------------------------------------------------------------+
+class SQLiteDriver : public IDatabaseDriver
+{
+ private:
+   int m_database;
+   string m_lastError;
 
-public:
-   bool connect(const string& connectionString) override {
-      // Open a database connection using DatabaseOpen
-      db = DatabaseOpen(connectionString, DATABASE_OPEN_READWRITE | DATABASE_OPEN_CREATE);
-      if (db == INVALID_HANDLE) {
-         Print("Can't open database: ", GetLastError());
+ public:
+   SQLiteDriver() : m_database(INVALID_HANDLE)
+   {
+   }
+
+   virtual int Open(string filename, uint flags) override
+   {
+      m_database = DatabaseOpen(filename, flags);
+      if (m_database == INVALID_HANDLE)
+         m_lastError = "Failed to open SQLite database. Error: " + IntegerToString(GetLastError());
+         
+      return m_database;
+   }
+
+   virtual void Close() override
+   {
+      if (m_database != INVALID_HANDLE)
+      {
+         DatabaseClose(m_database);
+         m_database = INVALID_HANDLE;
+      }
+   }
+
+   virtual bool Execute(string query) override
+   {
+      if (m_database == INVALID_HANDLE)
+      {
+         m_lastError = "SQLite database not connected.";
+         return false;
+      }
+      if (!DatabaseExecute(m_database, query))
+      {
+         m_lastError = "Query execution failed. Error: " + IntegerToString(GetLastError());
          return false;
       }
       return true;
    }
 
-   bool query(const string& query) override {
-      // Execute an SQL query using DatabaseExecute
-      if (!DatabaseExecute(db, query)) {
-         Print("DatabaseExecute error ", GetLastError());
-         ResetLastError();
-         return false;
+   virtual int Prepare(string query) override
+   {
+      if (m_database == INVALID_HANDLE)
+      {
+         m_lastError = "SQLite database not connected.";
+         return INVALID_HANDLE;
       }
 
-      return true;
+      int request = DatabasePrepare(m_database, query);
+      if (request == INVALID_HANDLE)
+      {
+         m_lastError = "DatabasePrepare failed. Error: " + IntegerToString(GetLastError());
+      }
+      return request;
    }
 
-   int getAffectedRows() override
+   virtual bool Read(int request) override
    {
-      return 0; // TODO: Implement this method
+      return DatabaseRead(request);
    }
 
-   int getLastInsertId() override
+   virtual bool ColumnLong(int request, int column, long &value) override
    {
-      return 0; // TODO: Implement this method
+      return DatabaseColumnLong(request, column, value);
+   }
+
+   virtual void Finalize(int request) override
+   {
+      DatabaseFinalize(request);
+   }
+
+   virtual string GetLastErrorMsg() override
+   {
+      return m_lastError;
+   }
+
+   virtual int GetHandle() override
+   {
+      return m_database;
    }
 };
